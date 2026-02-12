@@ -12,6 +12,7 @@ import LoansTaken from "./pages/Finance/Loans/LoanTaken";
 import LoansGiven from "./pages/Finance/Loans/LoanGiven";
 import AddLoanTaken from "./pages/Finance/Loans/AddLoanTaken";
 import AddLoanGiven from "./pages/Finance/Loans/AddLoanGiven";
+import AddLoanPayment from "./pages/Finance/Loans/AddLoanPayment";
 
 import Income from "./pages/Finance/Income/Income";
 import EditSalary from "./pages/Finance/Income/EditSalary";
@@ -25,6 +26,7 @@ import FixedDeposits from "./pages/Finance/Savings/FixedDeposits";
 import UserManagement from "./pages/UserManagement/UserManagement";
 import Reports from "./pages/Reports/Reports";
 import Trips from "./pages/Trips/Trips";
+
 
 
 export default function App() {
@@ -93,6 +95,9 @@ export default function App() {
             <Route path="loans-given" element={<LoansGiven />} />
             <Route path="loans-taken/add" element={<AddLoanTaken />} />
             <Route path="loans-given/add" element={<AddLoanGiven />} />
+            <Route path="finance/loans-taken/pay/:loanId" element={<AddLoanPayment />} />
+            <Route path="finance/loans-given/pay/:loanId" element={<AddLoanPayment />} />
+
 
             <Route path="income" element={<Income />} />
             <Route path="income/edit-salary" element={<EditSalary />} />

@@ -9,6 +9,10 @@ const salarySchema = new mongoose.Schema(
       required: true,
     },
     amount: { type: Number, required: true },
+    isCredited: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

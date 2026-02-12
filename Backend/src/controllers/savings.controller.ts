@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Savings from "../models/Savings.model";
 
-/* ADD / WITHDRAW */
+/* ================= ADD / WITHDRAW ================= */
 export const addSavingsTransaction = async (
   req: Request,
   res: Response
@@ -9,6 +9,51 @@ export const addSavingsTransaction = async (
   try {
     const userId = (req as any).user.id;
     const { bank, amount, transactionType, note } = req.body;
+
+    // ✅ Validation
+    if (!bank || !amount || !transactionType) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
+    if (!["add", "withdraw"].includes(transactionType)) {
+      return res.status(400).json({ message: "Invalid transaction type" });
+    }
+
+    if (amount <= 0) {
+      return res.status(400).json({ message: "Amount must be positive" });
+    }
+
+    // ✅ Prevent overdraft
+    let balance = 0; // declare outside
+
+if (transactionType === "withdraw") {
+  const result = await Savings.aggregate([
+    { $match: { userId } },
+    {
+      $group: {
+        _id: null,
+        balance: {
+          $sum: {
+            $cond: [
+              { $eq: ["$transactionType", "add"] },
+              "$amount",
+              { $multiply: ["$amount", -1] }
+            ]
+          }
+        }
+      }
+    }
+  ]);
+
+  balance = result[0]?.balance || 0;
+
+  if (amount > balance) {
+    return res
+      .status(400)
+      .json({ message: "Insufficient savings balance" });
+  }
+}
+
 
     const transaction = await Savings.create({
       userId,
@@ -19,50 +64,58 @@ export const addSavingsTransaction = async (
     });
 
     res.status(201).json(transaction);
-  } catch {
+  } catch (err) {
+    console.error("❌ Savings error:", err);
     res.status(500).json({ message: "Error saving transaction" });
   }
 };
 
-/* GET SAVINGS SUMMARY */
+/* ================= SUMMARY ================= */
 export const getSavingsSummary = async (
   req: Request,
   res: Response
 ) => {
   try {
     const userId = (req as any).user.id;
-
     const transactions = await Savings.find({ userId });
 
-    let totalSavings = 0;
+    let totalAdded = 0;
     let totalWithdrawn = 0;
 
     transactions.forEach((t) => {
       if (t.transactionType === "add") {
-        totalSavings += t.amount;
+        totalAdded += t.amount;
       } else {
         totalWithdrawn += t.amount;
       }
     });
 
     res.json({
-      totalSavings,
+      totalAdded,
       totalWithdrawn,
-      balance: totalSavings - totalWithdrawn,
+      balance: totalAdded - totalWithdrawn,
     });
-  } catch {
+  } catch (err) {
+    console.error("❌ Summary error:", err);
     res.status(500).json({ message: "Error fetching summary" });
   }
 };
 
-/* GET ALL TRANSACTIONS */
+/* ================= HISTORY ================= */
 export const getSavingsTransactions = async (
   req: Request,
   res: Response
 ) => {
-  const userId = (req as any).user.id;
-  const transactions = await Savings.find({ userId }).sort({
-    createdAt: -1,
-  });
-  res.json(transactions);
+  try {
+    const userId = (req as any).user.id;
+
+    const transactions = await Savings.find({ userId }).sort({
+      createdAt: -1,
+    });
+
+    res.json(transactions);
+  } catch (err) {
+    console.error("❌ Fetch error:", err);
+    res.status(500).json({ message: "Error fetching transactions" });
+  }
 };

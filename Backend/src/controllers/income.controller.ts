@@ -27,6 +27,24 @@ export const getIncomeSummary = async (req: Request, res: Response) => {
   }
 };
 
+export const salaryCredited = async (req: Request, res: Response) => {
+    try{
+        const userId = (req as any).user.id;
+        const salary = await Salary.findOne({ userId });
+        if (!salary) {
+            return res.status(404).json({ message: "Salary not found" });
+        }
+        const savedSalary = await Salary.findOneAndUpdate(
+          { userId },
+          { amount: salary.amount, isCredited: true }, // ✅ map salary → amount and set isCredited to true
+          { upsert: true, new: true }
+        );
+        res.json(savedSalary);
+    } catch (error) {
+        res.status(500).json({ message: "Error marking salary as credited", error });
+    }
+}
+
 /* ================= SET / UPDATE SALARY ================= */
 export const setSalary = async (req: Request, res: Response) => {
   try {

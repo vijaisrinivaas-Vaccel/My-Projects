@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import SavingsChart from "../../components/Charts/SavingsChart";
-import { buildSavingsChart } from "../../Utils/SavingsUtils";
+import { buildSavingsChart } from "../../Utils/savingsUtils";
 
 
 interface SavingsTransaction {

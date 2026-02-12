@@ -9,7 +9,7 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 const router = Router();
 
 router.post("/", authMiddleware, addSavingsTransaction);
-router.get("/", authMiddleware, getSavingsTransactions);
 router.get("/summary", authMiddleware, getSavingsSummary);
+router.get("/", authMiddleware, getSavingsTransactions);
 
 export default router;

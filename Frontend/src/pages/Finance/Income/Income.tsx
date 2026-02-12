@@ -1,10 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Button from "../../../components/ui/Button";
 
 export default function Income() {
   const [data, setData] = useState<any>(null);
   const navigate = useNavigate();
+  const [showConfirm, setShowConfirm] = useState(false);
 
+  const salaryCredited = async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch("http://localhost:5000/api/income/salarycredited", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setData(await res.json()); 
+  }
+      
   useEffect(() => {
     const fetchIncome = async () => {
       const token = localStorage.getItem("token");
@@ -32,13 +45,44 @@ export default function Income() {
           <p className="text-gray-500">Monthly Salary</p>
           <h3 className="text-xl font-semibold">₹{data.salary}</h3>
         </div>
-        <button
-          onClick={() => navigate("/finance/income/edit-salary")}
-          className="text-blue-600"
-        >
-          Edit
-        </button>
+        <div className="flex flex-col gap-3 ">
+          <Button onClick={() => setShowConfirm(true)}>
+            Credited
+          </Button>
+          <Button onClick={() => navigate("/finance/income/edit-salary")}>
+            Edit
+          </Button>
+          
+        </div>
+        
       </div>
+
+      {showConfirm && (
+        <div className="bg-white border rounded-lg shadow p-4 max-w-sm bg-centered mx-auto ">
+          <p className="text-sm text-gray-700 mb-4">
+            Confirm that this month’s salary has been credited?
+          </p>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowConfirm(false)}
+              className="px-4 py-2 border rounded"
+            >
+              Cancel
+            </button>
+
+            <Button
+              onClick={() => {
+                salaryCredited();
+                setShowConfirm(false);
+              }}
+            >
+              Confirm
+            </Button>
+          </div>
+        </div>
+      )}
+
 
       {/* OTHER INCOME */}
       <div className="bg-white rounded-xl shadow border">

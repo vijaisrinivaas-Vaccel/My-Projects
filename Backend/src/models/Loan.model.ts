@@ -5,7 +5,10 @@ const loanSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     type: { type: String, enum: ["taken", "given"], required: true },
     personOrBank: String,
-    amount: Number,
+    amount: {
+      type: Number,
+      required: true,
+      },
     interest: Number,
     status: { type: String, default: "active" },
   },
