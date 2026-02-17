@@ -9,23 +9,30 @@ export default function Income() {
 
   const salaryCredited = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("http://localhost:5000/api/income/salarycredited", {
+    await fetch("http://localhost:5000/api/income/salarycredited", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    setData(await res.json()); 
+    await fetchIncome();
+    setShowConfirm(false); 
   }
+
+  const fetchIncome = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  const res = await fetch("http://localhost:5000/api/income", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const incomeData = await res.json();
+  setData(incomeData);
+};
+
       
   useEffect(() => {
-    const fetchIncome = async () => {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/income", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setData(await res.json());
-    };
     fetchIncome();
   }, []);
 
@@ -35,7 +42,7 @@ export default function Income() {
     <div className="space-y-6">
       {/* TOTAL INCOME */}
       <div className="bg-white p-6 rounded-xl shadow">
-        <p className="text-gray-500">Total Income</p>
+        <p className="text-gray-500">Total Monthly Income</p>
         <h2 className="text-3xl font-bold">₹{data.totalIncome}</h2>
       </div>
 
@@ -46,9 +53,13 @@ export default function Income() {
           <h3 className="text-xl font-semibold">₹{data.salary}</h3>
         </div>
         <div className="flex flex-col gap-3 ">
-          <Button onClick={() => setShowConfirm(true)}>
-            Credited
+          <Button
+            disabled={data.isCredited}
+            onClick={() => setShowConfirm(true)}
+          >
+            {data.isCredited ? "Credited" : "Credit Salary"}
           </Button>
+
           <Button onClick={() => navigate("/finance/income/edit-salary")}>
             Edit
           </Button>
@@ -72,13 +83,12 @@ export default function Income() {
             </button>
 
             <Button
-              onClick={() => {
-                salaryCredited();
-                setShowConfirm(false);
-              }}
+              disabled={data.isCredited}
+              onClick={salaryCredited}
             >
               Confirm
             </Button>
+
           </div>
         </div>
       )}

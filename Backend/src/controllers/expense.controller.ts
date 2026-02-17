@@ -17,7 +17,7 @@ export const addExpense = async (req: Request, res: Response) => {
     });
 
     res.status(201).json(expense);
-  } catch (err) {
+  } catch (err) { 
     res.status(500).json({ message: "Error adding expense" });
   }
 };
@@ -33,6 +33,7 @@ export const getMyExpenses = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error fetching expenses" });
   }
 };
+
 export const deleteExpense = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;

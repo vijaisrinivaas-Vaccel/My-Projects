@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<SavingsTransaction[]>([]);
 
     const [totalIncome, setTotalIncome] = useState<number>(0);
+    const [currentBalance, setCurrentBalance] = useState<number>(0);
 
   useEffect(() => {
     const fetchIncome = async () => {
@@ -66,7 +67,7 @@ export default function Dashboard() {
 
       {/* TOTAL INCOME */}
       <div className="bg-white p-6 rounded-xl shadow">
-        <p className="text-gray-500">Total Income</p>
+        <p className="text-gray-500">current Balance Amount</p>
         <h2 className="text-3xl font-bold">₹{totalIncome}</h2>
       </div>
 
