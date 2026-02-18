@@ -5,7 +5,7 @@ export interface ExpenseDocument extends Document {
   subject: string;
   shopName: string;
   amount: number;
-  category: "Travel" | "Food" | "Accommodation" | "Office Supplies";
+  category: "Travel" | "Food" | "Outing" | "Games" | "Entertainment" | "Accommodation" | "Office Supplies"| "Donations" | "Health" | "Education" | "Other";
   date: Date;
   description?: string;
   addToReport: boolean;
@@ -40,7 +40,7 @@ const expenseSchema = new Schema<ExpenseDocument>(
 
     category: {
       type: String,
-      enum: ["Travel", "Food", "Accommodation", "Office Supplies"],
+      enum: ["Travel", "Food", "Outing", "Games", "Entertainment", "Accommodation", "Office Supplies", "Donations", "Health", "Education", "Other"],
       required: true,
     },
 

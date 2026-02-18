@@ -10,8 +10,13 @@ const currentBalanceSchema = new mongoose.Schema({
     type: Number,
     default: 0 
     },
+  lastIncomeAddedMonth: {
+    type: String,
+  },
     },
     { timestamps: true }
 );
+
+currentBalanceSchema.index({ userId: 1 }, { unique: true });
 
 export default mongoose.model("CurrentBalance", currentBalanceSchema, "CurrentBalances");

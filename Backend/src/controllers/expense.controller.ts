@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Expense from "../models/Expense.model";
+import CurrentBalance from "../models/CurrentBalance.model";
 
 export const addExpense = async (req: Request, res: Response) => {
   try {
@@ -16,6 +17,11 @@ export const addExpense = async (req: Request, res: Response) => {
       description,
     });
 
+    await CurrentBalance.findOneAndUpdate(
+      { userId },
+      { $inc: { currentBalance: -amount } },
+      { new: true }
+    );
     res.status(201).json(expense);
   } catch (err) { 
     res.status(500).json({ message: "Error adding expense" });
@@ -27,6 +33,8 @@ export const getMyExpenses = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
 
     const expenses = await Expense.find({ userId }).sort({ createdAt: -1 });
+
+    
 
     res.json(expenses);
   } catch (err) {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import AddExpenseDialog from "./AddExpenseDialog";
+
 
 interface Expense {
   _id: string;
@@ -11,9 +12,10 @@ interface Expense {
 }
 
 export default function Expenses() {
-  const navigate = useNavigate();
+  
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -44,7 +46,7 @@ export default function Expenses() {
         <h1 className="text-3xl font-bold">Expenses</h1>
 
         <button
-          onClick={() => navigate("/expenses/add")}
+          onClick={() => setOpen(true)}
           className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
         >
           + Add Expense
@@ -56,7 +58,7 @@ export default function Expenses() {
         {/* Header row */}
         <div className="grid grid-cols-6 gap-4 px-6 py-4 text-sm font-semibold text-gray-500 border-b">
           <div>Details</div>
-          <div>Shop Name</div>
+          <div>Merchant</div>
           <div>Amount</div>
           <div>Date</div>
           <div>Category</div>
@@ -92,6 +94,7 @@ export default function Expenses() {
           </div>
         ))}
       </div>
+      <AddExpenseDialog open={open} onOpenChange={setOpen} />
     </div>
   );
 }

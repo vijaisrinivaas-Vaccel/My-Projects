@@ -18,7 +18,7 @@ export default function AddSavings() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const res = await fetch("http://localhost:5000/api/savings", {
+    const res = await fetch("http://localhost:5000/api/savings/addSavingData", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

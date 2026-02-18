@@ -1,6 +1,7 @@
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import Salary from "../models/Salary.model";
 import Income from "../models/Income.model";
+import CurrentBalance from "../models/CurrentBalance.model";
 
 /* ================= GET INCOME SUMMARY ================= */
 export const getIncomeSummary = async (req: Request, res: Response) => {
@@ -8,10 +9,10 @@ export const getIncomeSummary = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
 
     const now = new Date();
-    const month = now.getMonth();       // 0–11
+    const month = now.getMonth();
     const year = now.getFullYear();
+    const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
 
-    // ✅ get CURRENT month salary only
     const salaryDoc = await Salary.findOne({ userId, month, year });
 
     const otherIncome = await Income.find({
@@ -19,25 +20,32 @@ export const getIncomeSummary = async (req: Request, res: Response) => {
       source: { $ne: "Monthly Salary" },
     }).sort({ createdAt: -1 });
 
-
     const salaryAmount = salaryDoc?.amount || 0;
+    const otherTotal = otherIncome.reduce((sum, inc) => sum + (inc.amount || 0), 0);
+    const totalIncome = salaryAmount + otherTotal;
 
-    const otherTotal = otherIncome.reduce(
-      (sum, inc) => sum + (inc.amount || 0),
-      0
-    );
+    let balanceDoc = await CurrentBalance.findOne({ userId });
+
+    if (!balanceDoc) {
+      balanceDoc = await CurrentBalance.create({
+        userId,
+        currentBalance: 0,
+      });
+    }
 
     res.json({
       salary: salaryAmount,
-      isCredited: salaryDoc?.isCredited ?? false, // 🔥 important for UI
+      isCredited: salaryDoc?.isCredited ?? false,
       otherIncome,
-      totalIncome: salaryAmount + otherTotal,
+      totalIncome,
+      currentBalance: balanceDoc.currentBalance,
     });
   } catch (err) {
-    console.error("❌ getIncomeSummary error:", err);
+    console.error("getIncomeSummary error:", err);
     res.status(500).json({ message: "Failed to fetch income summary" });
   }
 };
+
 
 
 export const salaryCredited = async (req: Request, res: Response) => {
@@ -60,28 +68,36 @@ export const salaryCredited = async (req: Request, res: Response) => {
       });
     }
 
-    /* ✅ Mark credited */
     salary.isCredited = true;
     salary.creditedAt = new Date();
     await salary.save();
 
-    /* 💸 Add to income */
+    // Create income entry
     await Income.create({
       userId,
       source: "Monthly Salary",
       amount: salary.amount,
     });
 
-    res.json({ message: "Salary credited successfully", salary });
+    // Increase balance
+    const balanceDoc = await CurrentBalance.findOneAndUpdate(
+      { userId },
+      { $inc: { currentBalance: salary.amount } },
+      { new: true, upsert: true }
+    );
+
+    res.json({
+      message: "Salary credited successfully",
+      updatedBalance: balanceDoc.currentBalance,
+    });
+
   } catch (error) {
+    console.error(error);
     res.status(500).json({
       message: "Error crediting salary",
-      error,
     });
   }
 };
-
-
 
 
 /* ================= SET / UPDATE SALARY ================= */
@@ -95,14 +111,14 @@ export const setSalary = async (req: Request, res: Response) => {
     }
 
     const now = new Date();
-    const month = now.getMonth();      
+    const month = now.getMonth();
     const year = now.getFullYear();
 
     const savedSalary = await Salary.findOneAndUpdate(
-      { userId, month, year },         
+      { userId, month, year },
       {
         amount: salary,
-        isCredited: false,             
+        isCredited: false,
       },
       {
         upsert: true,
@@ -112,11 +128,10 @@ export const setSalary = async (req: Request, res: Response) => {
 
     res.json(savedSalary);
   } catch (err) {
-    console.error("❌ setSalary error:", err);
+    console.error("setSalary error:", err);
     res.status(500).json({ message: "Failed to update salary" });
   }
 };
-
 
 /* ================= ADD OTHER INCOME ================= */
 export const addIncome = async (req: Request, res: Response) => {
@@ -124,31 +139,118 @@ export const addIncome = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const { source, amount } = req.body;
 
-    if (!source || !amount) {
-      return res.status(400).json({ message: "Missing fields" });
+    const numericAmount = Number(amount);
+
+    if (!source || isNaN(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ message: "Invalid income data" });
     }
 
     const income = await Income.create({
       userId,
       source,
-      amount,
+      amount: numericAmount,
     });
 
-    res.status(201).json(income);
+    const balanceDoc = await CurrentBalance.findOneAndUpdate(
+      { userId },
+      { $inc: { currentBalance: numericAmount } },
+      { new: true, upsert: true }
+    );
+
+    return res.status(201).json({
+      income,
+      updatedBalance: balanceDoc?.currentBalance ?? 0,
+    });
+
   } catch (err) {
-    console.error("❌ addIncome error:", err);
-    res.status(500).json({ message: "Failed to add income" });
+    console.error("addIncome error:", err);
+    return res.status(500).json({ message: "Failed to add income" });
   }
 };
 
-export const balanceAmount = async (req: Request, res: Response) => {
-try {
-  const userId = (req as any).user.id;
-  const monthlyIncome = await Salary.findOne({ userId }).sort({ createdAt: -1 });
 
-}catch (err) {
-  console.error("❌ balanceAmount error:", err);
-  res.status(500).json({ message: "Failed to fetch balance amount" });
-}
+/* ================= DELETE OTHER INCOME ================= */
+export const deleteAddedIncome = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const incomeId = req.params.id;
 
+    // First find income (DO NOT delete yet)
+    const income = await Income.findOne({
+      _id: incomeId,
+      userId: userId,
+      source: { $ne: "Monthly Salary" },
+    });
+
+    if (!income) {
+      return res.status(404).json({ message: "Income not found" });
+    }
+
+    // Delete income
+    await Income.deleteOne({ _id: incomeId });
+
+    // Decrease balance safely
+    let amountToDeduct = income.amount || 0;
+    const balanceDoc = await CurrentBalance.findOneAndUpdate(
+      { userId },
+      { $inc: { currentBalance: -amountToDeduct } },
+      { new: true }
+    );
+
+    return res.json({
+      message: "Income deleted successfully",
+      updatedBalance: balanceDoc?.currentBalance ?? 0,
+    });
+
+  } catch (err) {
+    console.error("deleteIncome error:", err);
+    return res.status(500).json({ message: "Failed to delete income" });
+  }
+};
+
+export const updateAddedIncome = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const incomeId = req.params.id;
+    const { source, amount } = req.body;
+    const numericAmount = Number(amount);
+
+    if (!source || isNaN(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ message: "Invalid income data" });
+    }
+
+    // First find income (DO NOT update yet)
+    const income = await Income.findOne({
+      _id: incomeId,
+      userId: userId,
+      source: { $ne: "Monthly Salary" },
+    });
+
+    if (!income) {
+      return res.status(404).json({ message: "Income not found" });
+    }
+
+    // Calculate difference for balance update
+    const amountDifference = numericAmount - (income.amount || 0);
+
+    // Update income
+    income.source = source;
+    income.amount = numericAmount;
+    await income.save();
+
+    // Update balance safely
+    const balanceDoc = await CurrentBalance.findOneAndUpdate(
+      { userId },
+      { $inc: { currentBalance: amountDifference } },
+      { new: true }
+    );
+
+    return res.json({
+      income,
+      updatedBalance: balanceDoc?.currentBalance ?? 0,
+    });
+  } catch (err) {
+    console.error("editAddedIncome error:", err);
+    return res.status(500).json({ message: "Failed to edit income" });
+  }
 };

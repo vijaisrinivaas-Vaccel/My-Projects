@@ -5,7 +5,7 @@ import AuthPage from "./pages/Auth/AuthPage";
 import DashboardLayout from "./pages/Dashboard/DashboardLayout";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Expenses from "./pages/Expenses/Expenses";
-import AddExpense from "./pages/Expenses/AddExpenses";
+
 import Finance from "./pages/Finance/Finance";
 
 import LoansTaken from "./pages/Finance/Loans/LoanTaken";
@@ -15,8 +15,6 @@ import AddLoanGiven from "./pages/Finance/Loans/AddLoanGiven";
 import AddLoanPayment from "./pages/Finance/Loans/AddLoanPayment";
 
 import Income from "./pages/Finance/Income/Income";
-import EditSalary from "./pages/Finance/Income/EditSalary";
-import AddIncome from "./pages/Finance/Income/AddIncome";
 
 import Savings from "./pages/Finance/Savings/Savings";
 import AddSavings from "./pages/Finance/Savings/AddSavings";
@@ -84,7 +82,7 @@ export default function App() {
           <Route index element={<Dashboard />} />
 
           <Route path="expenses" element={<Expenses />} />
-          <Route path="expenses/add" element={<AddExpense />} />
+          
 
           <Route path="trips" element={<Trips />} />
 
@@ -100,8 +98,6 @@ export default function App() {
 
 
             <Route path="income" element={<Income />} />
-            <Route path="income/edit-salary" element={<EditSalary />} />
-            <Route path="income/add" element={<AddIncome />} />
 
             <Route path="savings" element={<Savings />} />
             <Route path="savings/add" element={<AddSavings />} />

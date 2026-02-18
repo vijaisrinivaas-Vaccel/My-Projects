@@ -12,11 +12,9 @@ interface SavingsTransaction {
 export default function Dashboard() {
   const [transactions, setTransactions] = useState<SavingsTransaction[]>([]);
 
-    const [totalIncome, setTotalIncome] = useState<number>(0);
-    const [currentBalance, setCurrentBalance] = useState<number>(0);
-
-  useEffect(() => {
-    const fetchIncome = async () => {
+  const [totalIncome, setTotalIncome] = useState<number>(0);
+  const [currentBalance, setCurrentBalance] = useState<number>(0);
+  const fetchIncome = async () => {
       const token = localStorage.getItem("token");
       const res = await fetch("http://localhost:5000/api/income", {
         headers: {
@@ -27,9 +25,11 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json();
         setTotalIncome(data.totalIncome);
+        setCurrentBalance(data.currentBalance);
       }
     };
 
+  useEffect(() => {
     fetchIncome();
   }, []);
 
@@ -66,10 +66,18 @@ export default function Dashboard() {
       <h1 className="text-2xl font-bold">Dashboard</h1>
 
       {/* TOTAL INCOME */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <p className="text-gray-500">current Balance Amount</p>
-        <h2 className="text-3xl font-bold">₹{totalIncome}</h2>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-white p-5 rounded-xl shadow">
+          <p className="text-gray-500">current Balance Amount</p>
+          <h2 className="text-3xl font-bold">₹{currentBalance}</h2>
+        </div>
+      
+        <div className="bg-white p-5 rounded-xl shadow">
+          <p className="text-gray-500 text-sm">This Month's Income</p>
+          <h2 className="text-2xl font-bold">₹{totalIncome}</h2>
+        </div>
       </div>
+      
 
       {/* SUMMARY CARDS */}
       <div className="grid grid-cols-2 gap-6">
