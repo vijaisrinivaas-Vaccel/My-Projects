@@ -22,7 +22,7 @@ export function DropdownContent({ children, ...rest }: any) {
     <DropdownMenu.Portal>
       <DropdownMenu.Content
         {...rest}
-        className="min-w-[200px] rounded-md border border-gray-200 bg-white shadow-md"
+        className="min-w-50 rounded-md border border-gray-200 bg-white shadow-md"
       >
         {children}
       </DropdownMenu.Content>

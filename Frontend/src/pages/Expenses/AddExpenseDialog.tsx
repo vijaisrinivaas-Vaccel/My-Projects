@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState,useEffect } from "react";
+
 import {
   DialogRoot,
   DialogContent,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
   DialogFooter,
   DialogClose,
@@ -12,13 +13,17 @@ import {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
+  editData?: any | null;
 }
+
 
 export default function AddExpenseDialog({
   open,
   onOpenChange,
-}: Props) {
-  const navigate = useNavigate();
+  onSuccess,
+  editData,
+}: Props){
 
   const [form, setForm] = useState({
     subject: "",
@@ -30,6 +35,33 @@ export default function AddExpenseDialog({
     addToReport: true,
     file: null as File | null,
   });
+
+  useEffect(() => {
+  if (editData) {
+    setForm({
+      subject: editData.subject,
+      shopName: editData.shopName,
+      amount: editData.amount.toString(),
+      date: editData.date.split("T")[0],
+      category: editData.category,
+      description: editData.description || "",
+      addToReport: editData.addToReport ?? true,
+      file: null,
+    });
+  } else {
+    setForm({
+      subject: "",
+      shopName: "",
+      amount: "",
+      date: "",
+      category: "Travel",
+      description: "",
+      addToReport: true,
+      file: null,
+    });
+  }
+}, [editData, open]);
+
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -56,30 +88,30 @@ export default function AddExpenseDialog({
     }
 
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Not authenticated");
-      return;
-    }
+    if (!token) return;
 
-    const res = await fetch(
-      "http://localhost:5000/api/expenses/addExpense",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          subject: form.subject,
-          shopName: form.shopName,
-          amount: Number(form.amount),
-          category: form.category,
-          date: form.date,
-          description: form.description,
-          addToReport: form.addToReport,
-        }),
-      }
-    );
+    const url = editData
+      ? `http://localhost:5000/api/expenses/edit/${editData._id}`
+      : "http://localhost:5000/api/expenses/addExpense";
+
+    const method = editData ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        subject: form.subject,
+        shopName: form.shopName,
+        amount: Number(form.amount),
+        category: form.category,
+        date: form.date,
+        description: form.description,
+        addToReport: form.addToReport,
+      }),
+    });
 
     const data = await res.json();
 
@@ -89,14 +121,23 @@ export default function AddExpenseDialog({
     }
 
     onOpenChange(false);
-    navigate("/expenses");
+    onSuccess?.();
   };
+
 
   return (
     <DialogRoot open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-150 max-w-full">
         <DialogHeader>
-          <DialogTitle>Add Expense</DialogTitle>
+          <DialogTitle>
+            {editData ? "Edit Expense" : "Add Expense"}
+          </DialogTitle>
+
+          <DialogDescription>
+            {editData
+              ? "Update your expense details below."
+              : "Fill the details to add a new expense."}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -198,7 +239,7 @@ export default function AddExpenseDialog({
             onClick={handleSave}
             className="px-6 py-2 bg-blue-600 text-white rounded"
           >
-            Save
+            {editData ? "Update" : "Save"}
           </button>
         </DialogFooter>
       </DialogContent>

@@ -8,9 +8,9 @@ import Expense from "../models/Expense.model";
 /* ================= REGISTER ================= */
 export const register = async (req: Request, res: Response) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { firstname, lastname, email, password, role } = req.body;
 
-    if (!username || !email || !password || !role) {
+    if (!firstname || !lastname || !email || !password || !role) {
       return res.status(400).json({ message: "Missing fields" });
     }
 
@@ -23,7 +23,8 @@ export const register = async (req: Request, res: Response) => {
       }
 
       await Admin.create({
-        username,
+        firstname,
+        lastname,
         email,
         password: hashedPassword,
         role: "admin",
@@ -39,7 +40,8 @@ export const register = async (req: Request, res: Response) => {
       }
 
       await User.create({
-        username,
+        firstname,
+        lastname,
         email,
         password: hashedPassword,
         role: "user",
@@ -50,6 +52,7 @@ export const register = async (req: Request, res: Response) => {
 
     return res.status(400).json({ message: "Invalid role" });
   } catch (err) {
+    console.error("REGISTER ERROR:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -99,7 +102,7 @@ export const login = async (req: Request, res: Response) => {
 /* ================= GET LOGGED-IN USER ================= */
 export const getMe = async (req: Request, res: Response) => {
   try {
-    // 🔥 JWT already verified in middleware
+    
     const { id, role } = (req as any).user;
 
     const Model = role === "admin" ? Admin : User;

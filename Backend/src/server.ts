@@ -12,6 +12,7 @@ import financeRoutes from "./routes/finance.routes";
 import savingsRoutes from "./routes/savings.routes";
 import income from "./routes/income.routes";
 import loanTransactionRoutes from "./routes/loanTransaction.routes";
+import tripRoutes from "./routes/trips.routes";
 
 
 dotenv.config({ path: path.resolve(__dirname, "../config.env") });
@@ -31,6 +32,7 @@ app.use("/api/finance", financeRoutes);
 app.use("/api/savings", savingsRoutes);
 app.use("/api/income", income);
 app.use("/api/loan-transactions", loanTransactionRoutes);
+app.use("/api/trips", tripRoutes);
 
 app.get("/api", (req, res) => {
   res.json({ message: "Welcome to the Expense Tracker API" });

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AddExpenseDialog from "./AddExpenseDialog";
+import { Button, Delbutton } from "../../components/ui/Button";
 
 
 interface Expense {
@@ -12,13 +13,42 @@ interface Expense {
 }
 
 export default function Expenses() {
-  
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchExpenses = async () => {
+  const handleDelete = async (_id: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/expenses/delete/${_id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        alert(errData?.message || "Failed to delete expense");
+        return;
+      }
+
+      await fetchExpenses();
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      alert("Error deleting expense");
+    }
+  };
+  
+  const handleEdit = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setOpen(true);
+  };
+
+  const fetchExpenses = async () => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
@@ -35,7 +65,7 @@ export default function Expenses() {
 
       setLoading(false);
     };
-
+  useEffect(() => {
     fetchExpenses();
   }, []);
 
@@ -46,7 +76,10 @@ export default function Expenses() {
         <h1 className="text-3xl font-bold">Expenses</h1>
 
         <button
-          onClick={() => setOpen(true)}
+                onClick={() => {
+          setSelectedExpense(null);
+          setOpen(true);
+        }}
           className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
         >
           + Add Expense
@@ -56,13 +89,14 @@ export default function Expenses() {
       {/* Table */}
       <div className="bg-white rounded-xl shadow border overflow-hidden">
         {/* Header row */}
-        <div className="grid grid-cols-6 gap-4 px-6 py-4 text-sm font-semibold text-gray-500 border-b">
+        <div className="grid grid-cols-7 gap-4 px-6 py-4 text-sm font-semibold text-gray-500 border-b">
           <div>Details</div>
           <div>Merchant</div>
           <div>Amount</div>
           <div>Date</div>
           <div>Category</div>
           <div>Status</div>
+          <div className="text-center">Actions</div>
         </div>
 
         {/* Loading */}
@@ -83,7 +117,7 @@ export default function Expenses() {
         {expenses.map((expense) => (
           <div
             key={expense._id}
-            className="grid grid-cols-6 gap-4 px-6 py-4 border-b text-sm"
+            className="grid grid-cols-7 gap-4 px-6 py-4 border-b text-sm"
           >
             <div className="font-medium">{expense.subject}</div>
             <div>{expense.shopName}</div>
@@ -91,10 +125,28 @@ export default function Expenses() {
             <div>{new Date(expense.date).toLocaleDateString()}</div>
             <div>{expense.category}</div>
             <div className="text-green-600 font-semibold">Saved</div>
+            <div className="flex justify-center gap-3">
+                          <Button onClick={() => handleEdit(expense)}>
+                            Edit
+                          </Button>
+                          
+                          <Delbutton onClick={() => handleDelete(expense._id)}>
+                            Delete
+                          </Delbutton>
+                        </div>
           </div>
         ))}
       </div>
-      <AddExpenseDialog open={open} onOpenChange={setOpen} />
+      <AddExpenseDialog
+        open={open}
+        onOpenChange={(value) => {
+          setOpen(value);
+          if (!value) setSelectedExpense(null);
+        }}
+        editData={selectedExpense}
+        onSuccess={fetchExpenses}
+      />
+
     </div>
   );
 }

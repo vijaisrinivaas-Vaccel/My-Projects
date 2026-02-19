@@ -3,6 +3,8 @@ import {
   addExpense,
   getMyExpenses,
   deleteExpense,
+  editAddedExpense,
+  deleteAddedExpense,
 } from "../controllers/expense.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
 
@@ -14,5 +16,7 @@ router.post("/addExpense", authMiddleware, (req, res, next) => {
 }, addExpense);
 router.get("/", authMiddleware, getMyExpenses);
 router.delete("/:id", authMiddleware, deleteExpense);
+router.put("/edit/:id", authMiddleware, editAddedExpense);
+router.delete("/delete/:id", authMiddleware, deleteAddedExpense);
 
 export default router;

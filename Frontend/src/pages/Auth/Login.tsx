@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 
 interface LoginProps {
@@ -12,6 +13,7 @@ export default function Login({
 }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
   if (!email || !password) {
@@ -61,15 +63,22 @@ export default function Login({
         />
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 relative">
         <label className="text-sm text-gray-500">Password</label>
         <input
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Type your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full border-b border-gray-300 outline-none py-2 focus:border-purple-500"
         />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500"
+        >
+          {showPassword ? <FiEyeOff /> : <FiEye />}
+        </button>
       </div>
 
       <button onClick={handleLogin} className="w-full py-3 rounded-full text-white font-semibold bg-linear-to-r from-blue-100 via-blue-300 to-blue-500 hover:opacity-90 transition">

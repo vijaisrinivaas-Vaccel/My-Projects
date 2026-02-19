@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Button, Delbutton } from "../../components/ui/Button";
+import CreateNewUserDialog from "./CreateNewUserDialog";
 
 interface User {
   _id: string;
@@ -8,153 +10,128 @@ interface User {
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-  });
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const token = localStorage.getItem("token");
 
-  /* ================= FETCH USERS ================= */
   const fetchUsers = async () => {
     const res = await fetch("http://localhost:5000/api/admin/users", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
+
     const data = await res.json();
     setUsers(data);
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  /* ================= CREATE USER ================= */
-  const handleCreate = async () => {
-    if (!form.username || !form.email || !form.password) {
-      alert("All fields required");
-      return;
-    }
-
-    const res = await fetch("http://localhost:5000/api/admin/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(form),
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      alert(err.message);
-      return;
-    }
-
-    setForm({ username: "", email: "", password: "" });
-    fetchUsers();
-  };
-
-  /* ================= DELETE USER ================= */
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this user?")) return;
 
     await fetch(`http://localhost:5000/api/admin/users/${id}`, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     fetchUsers();
   };
 
+  const handleEdit = (user: User) => {
+    setSelectedUser(user);
+    setOpen(true);
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">User Management</h1>
 
-      {/* USER COUNT */}
-      <div className="bg-white p-4 rounded shadow">
-        Total Users: <b>{users.length}</b>
-      </div>
-
-      {/* CREATE USER */}
-      <div className="bg-white p-6 rounded shadow space-y-4 max-w-md">
-        <h2 className="font-semibold">Create User</h2>
-
-        <input
-          placeholder="Username"
-          value={form.username}
-          onChange={(e) =>
-            setForm({ ...form, username: e.target.value })
-          }
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) =>
-            setForm({ ...form, email: e.target.value })
-          }
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={(e) =>
-            setForm({ ...form, password: e.target.value })
-          }
-          className="w-full border p-2 rounded"
-        />
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">User Management</h1>
 
         <button
-          onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          onClick={() => setOpen(true)}
+          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
         >
-          Create User
+          + Create User
         </button>
       </div>
 
-      {/* USERS TABLE */}
-      <div className="bg-white rounded shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Username</th>
-              <th className="p-3 text-left">Email</th>
-              <th className="p-3 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u._id} className="border-t">
-                <td className="p-3">{u.username}</td>
-                <td className="p-3">{u.email}</td>
-                <td className="p-3">
-                  <button
-                    onClick={() => handleDelete(u._id)}
-                    className="text-red-600 hover:underline"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {users.length === 0 && (
-              <tr>
-                <td colSpan={3} className="p-6 text-center text-gray-500">
-                  No users found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* 🔹 Summary Card (Professional Placement) */}
+      <div className="bg-white rounded-xl shadow p-6 flex items-center justify-between">
+        <div>
+          <p className="text-gray-500">Total Registered Users</p>
+          <h2 className="text-3xl font-bold text-blue-600">
+            {users.length}
+          </h2>
+        </div>
       </div>
+
+      {/* 🔹 Users Table */}
+      <div className="bg-white rounded-xl shadow border overflow-hidden">
+        {/* Table header and rows here */}
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-xl shadow border overflow-hidden">
+
+        {/* Header Row */}
+        <div className="grid grid-cols-4 gap-4 px-6 py-4 text-sm font-semibold text-gray-500 border-b bg-gray-100">
+          <div>Username</div>
+          <div>Email</div>
+          <div>CreatedAt</div>
+          <div className="text-center">Actions</div>
+        </div>
+
+        {/* Loading */}
+        {loading && (
+          <div className="px-6 py-10 text-center text-gray-500">
+            Loading users...
+          </div>
+        )}
+
+        {/* Empty */}
+        {!loading && users.length === 0 && (
+          <div className="px-6 py-10 text-center text-gray-500">
+            No users found
+          </div>
+        )}
+
+        {/* Rows */}
+        {users.map((user) => (
+          <div
+            key={user._id}
+            className="grid grid-cols-3 gap-4 px-6 py-4 border-b text-sm items-center"
+          >
+            <div className="font-medium">{user.username}</div>
+            <div>{user.email}</div>
+            <div className="flex justify-center gap-3">
+              <Button onClick={() => handleEdit(user)}>
+                Edit
+              </Button>
+
+              <Delbutton onClick={() => handleDelete(user._id)}>
+                Delete
+              </Delbutton>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Dialog */}
+      <CreateNewUserDialog
+        open={open}
+        onOpenChange={(value) => {
+          setOpen(value);
+          if (!value) setSelectedUser(null);
+        }}
+        editData={selectedUser}
+        onSuccess={fetchUsers}
+      />
     </div>
   );
 }

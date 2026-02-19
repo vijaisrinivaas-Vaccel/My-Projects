@@ -25,7 +25,7 @@ export function DialogContent({ children, ...rest }: any) {
       <Dialog.Overlay className="fixed inset-0 bg-black/10 backdrop-blur-sm transition-all" />
       <Dialog.Content
         {...rest}
-        className="fixed left-1/2 top-1/2 w-150 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg"
+        className="fixed left-1/2 top-1/2 w-200 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg"
       >
         {children}
         <Dialog.Close className="absolute right-4 top-4 text-gray-500 hover:text-gray-700">
